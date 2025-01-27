@@ -1,0 +1,12 @@
+{
+  "extends": "./node_modules/@hesto2/config/tsconfig.json",
+  "include": ["src/**/*", "src/*"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "outDir": "dist/",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "target": "ES2019",
+    "skipLibCheck": true
+  }
+}
