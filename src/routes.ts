@@ -116,6 +116,18 @@ router.get('/config', async (req: Request, res: Response) => {
     res.status(500).send(err);
   }
 });
+router.get('/me', async (req: Request, res: Response) => {
+  try {
+    const token = req.query.token as string;
+
+    const { email } = await authenticateUser(token);
+
+    res.status(200).json({ email });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
+});
 
 const getAuthenticatedClient = () => {
   const oAuth2Client = new OAuth2Client(
