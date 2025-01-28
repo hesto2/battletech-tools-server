@@ -8,8 +8,8 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "hesto2-terraform-state"
-    key            = "terraform"
+    bucket         = "hesto2-terraform-state-global"
+    key            = "battletech-tools"
     region         = "us-west-2"
     dynamodb_table = "terraform-lock"
   }
