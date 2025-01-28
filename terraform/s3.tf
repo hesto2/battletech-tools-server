@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "battletech_user_data" {
-  bucket = "battletech_user_data"
+  bucket = "battletech-user-data"
 }
 
 resource "aws_iam_policy" "s3_access_policy" {

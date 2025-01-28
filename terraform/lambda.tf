@@ -8,7 +8,7 @@ variable "google_client_secret" {
 module "api_gateway_lambda" {
   source                   = "./node_modules/hesto2-terraform-modules/api_gateway_lambda"
   domain_name              = "api.btt.hesto2.com"
-  app_name                 = "battletech_tools_api"
+  app_name                 = "battletech_tools_server"
   regional_certificate_arn = data.terraform_remote_state.hesto2_infrastructure.outputs.hesto2_regional_certificate_arn
   route53_zone_id          = data.terraform_remote_state.hesto2_infrastructure.outputs.hesto2_zone_id
   filename                 = "deploy.zip"
