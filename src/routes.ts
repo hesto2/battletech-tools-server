@@ -10,19 +10,28 @@ import { S3 } from 'aws-sdk';
 const s3 = new S3();
 
 const router = Router();
+const BUCKET_NAME = 'battletech-user-data';
 
 router.get('/oauthredirect', async (req: Request, res: Response) => {
   try {
     const client = getAuthenticatedClient();
-    const result = await client.getToken(req.query.code as string);
-    client.setCredentials(result.tokens);
+    const { tokens } = await client.getToken(req.query.code as string);
+    client.setCredentials(tokens);
+    const { refresh_token, access_token } = tokens;
+    const queryVars: any = {
+      access_token,
+      refresh_token,
+      email: await getUserEmail(client),
+    };
+    const queryString = Object.keys(queryVars)
+      .map(
+        (key) =>
+          `${encodeURIComponent(key)}=${encodeURIComponent(queryVars[key])}`
+      )
+      .join('&');
 
     res.redirect(
-      `${
-        process.env.APPLICATION_ROOT_URL
-      }/oauthredirect?tokens=${JSON.stringify(
-        result.tokens
-      )}&email=${await getUserEmail(client)}`
+      `${process.env.APPLICATION_ROOT_URL}/oauthredirect?${queryString}`
     );
   } catch (err) {
     console.log(err);
@@ -65,7 +74,7 @@ router.post('/config', async (req: Request, res: Response) => {
     const userEmail = await getUserEmail(oAuth2Client);
 
     const params = {
-      Bucket: 'battletech_user_data',
+      Bucket: BUCKET_NAME,
       Key: userEmail,
       Body: JSON.stringify(payload),
       ContentType: 'application/json',
@@ -90,7 +99,7 @@ router.get('/config', async (req: Request, res: Response) => {
     const userEmail = await getUserEmail(oAuth2Client);
 
     const params = {
-      Bucket: 'battletech_user_data',
+      Bucket: BUCKET_NAME,
       Key: userEmail,
     };
 
