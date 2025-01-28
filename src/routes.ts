@@ -21,7 +21,6 @@ router.get('/oauthredirect', async (req: Request, res: Response) => {
     const queryVars: any = {
       access_token,
       refresh_token,
-      email: await getUserEmail(client),
     };
     const queryString = Object.keys(queryVars)
       .map(
@@ -68,14 +67,11 @@ router.post('/config', async (req: Request, res: Response) => {
     const token = req.query.token as string;
     const payload = req.body;
 
-    const oAuth2Client = getAuthenticatedClient();
-    oAuth2Client.setCredentials({ access_token: token });
-
-    const userEmail = await getUserEmail(oAuth2Client);
+    const { email } = await authenticateUser(token);
 
     const params = {
       Bucket: BUCKET_NAME,
-      Key: userEmail,
+      Key: email,
       Body: JSON.stringify(payload),
       ContentType: 'application/json',
     };
@@ -89,18 +85,26 @@ router.post('/config', async (req: Request, res: Response) => {
   }
 });
 
+const authenticateUser = async (token: string): Promise<{ email: string }> => {
+  const oAuth2Client = getAuthenticatedClient();
+  const ticket = await oAuth2Client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_OAUTH_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+
+  return { email: payload.email };
+};
+
 router.get('/config', async (req: Request, res: Response) => {
   try {
     const token = req.query.token as string;
 
-    const oAuth2Client = getAuthenticatedClient();
-    oAuth2Client.setCredentials({ access_token: token });
-
-    const userEmail = await getUserEmail(oAuth2Client);
+    const { email } = await authenticateUser(token);
 
     const params = {
       Bucket: BUCKET_NAME,
-      Key: userEmail,
+      Key: email,
     };
 
     const data = await s3.getObject(params).promise();
@@ -120,12 +124,6 @@ const getAuthenticatedClient = () => {
     process.env.GOOGLE_OAUTH_REDIRECT_URI
   );
   return oAuth2Client;
-};
-
-const getUserEmail = async (oAuth2Client: OAuth2Client) => {
-  const oauth2 = google.oauth2({ version: 'v2', auth: oAuth2Client });
-  const userInfo = await oauth2.userinfo.get();
-  return userInfo.data.email;
 };
 
 export default router;
