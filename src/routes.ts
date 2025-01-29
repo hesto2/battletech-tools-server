@@ -7,6 +7,7 @@ import { Router, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { S3 } from 'aws-sdk';
+import { oauth2 } from 'googleapis/build/src/apis/oauth2';
 const s3 = new S3();
 
 const router = Router();
@@ -41,7 +42,10 @@ router.get('/oauthredirect', async (req: Request, res: Response) => {
 router.get('/oauth/token', async (req: Request, res: Response) => {
   try {
     const client = getAuthenticatedClient();
-    const { tokens } = await client.getToken(req.query.code as string);
+    const { tokens } = await client.getToken({
+      code: req.query.code as string,
+      redirect_uri: decodeURIComponent(req.query.redirect_uri as string),
+    });
     client.setCredentials(tokens);
     res.status(200).json(tokens);
   } catch (err) {
@@ -112,15 +116,14 @@ router.post('/config', async (req: Request, res: Response) => {
   }
 });
 
-const authenticateUser = async (token: string): Promise<{ email: string }> => {
+const authenticateUser = async (token: string): Promise<any> => {
   const oAuth2Client = getAuthenticatedClient();
-  const ticket = await oAuth2Client.verifyIdToken({
-    idToken: token,
-    audience: process.env.GOOGLE_OAUTH_CLIENT_ID,
-  });
-  const payload = ticket.getPayload();
+  oAuth2Client.setCredentials({ access_token: token });
+  const response = await google
+    .oauth2('v2')
+    .userinfo.get({ auth: oAuth2Client });
 
-  return { email: payload.email };
+  return response.data;
 };
 
 router.get('/config', async (req: Request, res: Response) => {
