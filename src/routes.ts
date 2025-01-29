@@ -37,6 +37,33 @@ router.get('/oauthredirect', async (req: Request, res: Response) => {
     res.status(500).send(err);
   }
 });
+
+router.get('/oauth/token', async (req: Request, res: Response) => {
+  try {
+    const client = getAuthenticatedClient();
+    const { tokens } = await client.getToken(req.query.code as string);
+    client.setCredentials(tokens);
+    res.status(200).json(tokens);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
+});
+
+router.get('/oauth/refresh', async (req: Request, res: Response) => {
+  try {
+    const client = getAuthenticatedClient();
+    client.setCredentials({
+      refresh_token: req.query.refresh_token as string,
+    });
+    const { credentials } = await client.refreshAccessToken();
+    res.status(200).json(credentials);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
+});
+
 router.get('/oauth/login', async (req: Request, res: Response) => {
   const oAuth2Client = getAuthenticatedClient();
   res.redirect(
