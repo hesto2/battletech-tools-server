@@ -143,6 +143,9 @@ router.get('/config', async (req: Request, res: Response) => {
     res.status(200).json(config);
   } catch (err) {
     console.log(err);
+    if (err.code === 'NoSuchKey') {
+      return res.status(200).json({});
+    }
     res.status(500).send(err);
   }
 });
